@@ -1,5 +1,7 @@
 # Clenja HQ
 
+![Status](https://img.shields.io/badge/status-production_ready-success)
+
 Welcome to the official repository for **Clenja Tech Ltd**'s website and client portal. This application is built with the modern Next.js App Router, styled with Tailwind CSS + Shadcn UI, and uses Prisma with an SQLite database (easily scalable to Postgres) for tracking leads, support tickets, and project requests.
 
 ## Tech Stack
