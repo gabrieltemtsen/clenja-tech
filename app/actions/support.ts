@@ -1,10 +1,15 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { ConvexHttpClient } from "convex/browser";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+
+// @ts-ignore
+import { api } from "@/convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
 
 const supportTicketSchema = z.object({
     subject: z.string().min(5, "Subject must be at least 5 characters"),
@@ -31,15 +36,14 @@ export async function createSupportTicket(formData: FormData) {
 
         const validatedData = supportTicketSchema.parse(rawData);
 
-        await prisma.supportTicket.create({
-            data: {
-                // @ts-ignore
-                userId: session.user.id,
-                subject: validatedData.subject,
-                description: validatedData.description,
-                category: validatedData.category,
-                priority: validatedData.priority,
-            },
+        // @ts-ignore
+        await convex.mutation(api.support.createTicket, {
+            // @ts-ignore
+            userId: session.user.id,
+            subject: validatedData.subject,
+            description: validatedData.description,
+            category: validatedData.category,
+            priority: validatedData.priority,
         });
 
         revalidatePath("/portal/support");

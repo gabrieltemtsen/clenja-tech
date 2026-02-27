@@ -1,11 +1,14 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
 import { compare } from "bcryptjs";
+import { ConvexHttpClient } from "convex/browser";
+
+// @ts-ignore
+import { api } from "../convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
 
 export const authOptions: NextAuthOptions = {
-    // Use Prisma adapter for user sessions
-    // adapter: PrismaAdapter(prisma), // Note: PrismaAdapter usually used for OAuth/Magic Links. With Credentials, it's mostly manual JWT.
     pages: {
         signIn: "/login",
     },
@@ -24,11 +27,16 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: {
+                let user;
+                try {
+                    // @ts-ignore
+                    user = await convex.query(api.users.getUserByEmail, {
                         email: credentials.email,
-                    },
-                });
+                    });
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
 
                 if (!user || !user.password) {
                     return null;
@@ -41,7 +49,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    id: user.id,
+                    id: user._id, // convex uses _id
                     email: user.email,
                     name: user.name,
                     role: user.role,

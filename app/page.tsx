@@ -4,19 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Code, Cpu, Database, Cloud, Cog, Headset } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { ConvexHttpClient } from "convex/browser";
+
+// @ts-ignore
+import { api } from "@/convex/_generated/api";
 
 export const dynamic = "force-dynamic";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
 
 export default async function Home() {
   let caseStudies: any[] = [];
   try {
-    caseStudies = await prisma.caseStudy.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-    });
+    // @ts-ignore
+    caseStudies = await convex.query(api.caseStudies.getCaseStudies, { limit: 3 });
   } catch (error) {
-    console.error("Prisma case studies fetch error:", error);
+    console.error("Convex case studies fetch error:", error);
   }
 
   return (
