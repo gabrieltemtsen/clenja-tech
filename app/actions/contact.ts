@@ -1,8 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { ConvexHttpClient } from "convex/browser";
 import { revalidatePath } from "next/cache";
+
+// @ts-ignore
+import { api } from "@/convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
 
 const contactSchema = z.object({
     name: z.string().min(2, "Name is required"),
@@ -24,17 +29,16 @@ export async function submitContact(formData: FormData) {
 
         const validatedData = contactSchema.parse(rawData);
 
-        await prisma.lead.create({
-            data: {
-                name: validatedData.name,
-                email: validatedData.email,
-                company: validatedData.company || null,
-                budget: validatedData.budget || null,
-                message: validatedData.message,
-            },
+        // @ts-ignore
+        await convex.mutation(api.leads.createLead, {
+            name: validatedData.name,
+            email: validatedData.email,
+            company: validatedData.company,
+            budget: validatedData.budget,
+            message: validatedData.message,
         });
 
-        revalidatePath("/admin"); // Revalidate admin leads dashboard if any
+        revalidatePath("/admin");
 
         return { success: true, message: "Thank you! We have received your message and will reach out shortly." };
     } catch (error) {

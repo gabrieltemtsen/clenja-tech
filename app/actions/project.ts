@@ -1,10 +1,15 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { ConvexHttpClient } from "convex/browser";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+
+// @ts-ignore
+import { api } from "@/convex/_generated/api";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
 
 const projectRequestSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters"),
@@ -31,15 +36,14 @@ export async function createProjectRequest(formData: FormData) {
 
         const validatedData = projectRequestSchema.parse(rawData);
 
-        await prisma.projectRequest.create({
-            data: {
-                // @ts-ignore
-                userId: session.user.id,
-                title: validatedData.title,
-                description: validatedData.description,
-                budget: validatedData.budget || null,
-                timeline: validatedData.timeline || null,
-            },
+        // @ts-ignore
+        await convex.mutation(api.projects.createProject, {
+            // @ts-ignore
+            userId: session.user.id,
+            title: validatedData.title,
+            description: validatedData.description,
+            budget: validatedData.budget,
+            timeline: validatedData.timeline,
         });
 
         revalidatePath("/portal");

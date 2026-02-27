@@ -1,8 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { ConvexHttpClient } from "convex/browser";
+
+// @ts-ignore
+import { api } from "@/convex/_generated/api";
 
 export const metadata = {
     title: "Case Studies | Clenja Tech",
@@ -12,14 +15,15 @@ export const metadata = {
 // Force dynamic since we read from DB
 export const dynamic = "force-dynamic";
 
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "http://127.0.0.1:3210");
+
 export default async function CaseStudiesPage() {
     let caseStudies: any[] = [];
     try {
-        caseStudies = await prisma.caseStudy.findMany({
-            orderBy: { createdAt: "desc" }
-        });
+        // @ts-ignore
+        caseStudies = await convex.query(api.caseStudies.getCaseStudies);
     } catch (error) {
-        console.error("Prisma case studies fetch error:", error);
+        console.error("Convex case studies fetch error:", error);
     }
 
     return (
@@ -45,7 +49,7 @@ export default async function CaseStudiesPage() {
                                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                                         <span className="text-sm font-semibold tracking-wider text-primary uppercase">{cs.client}</span>
                                         <div className="flex gap-2 flex-wrap">
-                                            {cs.tags.split(',').map((tag, i) => (
+                                            {cs.tags.split(',').map((tag: string, i: number) => (
                                                 <Badge key={i} variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">{tag.trim()}</Badge>
                                             ))}
                                         </div>
