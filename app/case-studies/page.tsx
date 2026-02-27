@@ -13,9 +13,14 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CaseStudiesPage() {
-    const caseStudies = await prisma.caseStudy.findMany({
-        orderBy: { createdAt: "desc" }
-    });
+    let caseStudies: any[] = [];
+    try {
+        caseStudies = await prisma.caseStudy.findMany({
+            orderBy: { createdAt: "desc" }
+        });
+    } catch (error) {
+        console.error("Prisma case studies fetch error:", error);
+    }
 
     return (
         <div className="flex flex-col items-center pb-24 min-h-screen">

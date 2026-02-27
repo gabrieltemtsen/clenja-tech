@@ -9,10 +9,15 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const caseStudies = await prisma.caseStudy.findMany({
-    take: 3,
-    orderBy: { createdAt: "desc" },
-  });
+  let caseStudies: any[] = [];
+  try {
+    caseStudies = await prisma.caseStudy.findMany({
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Prisma case studies fetch error:", error);
+  }
 
   return (
     <div className="flex flex-col items-center">
